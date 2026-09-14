@@ -75,10 +75,14 @@ const (
 	armWidth          = 5
 	massRadius        = 10
 	massRadiusScaling = 3.0
+
+	gridSize      = 64
+	gridThickness = 1.0
 )
 
 var (
 	bgColor   = color.RGBA{20, 60, 100, 255}
+	gridColor = color.RGBA{60, 90, 110, 255}
 	rodColor  = color.RGBA{0, 0, 0, 255}
 	cartColor = color.RGBA{255, 0, 0, 255}
 	armColor  = color.RGBA{20, 20, 20, 255}
@@ -127,6 +131,14 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(bgColor)
+	offsetX := int(g.scrollX) % gridSize
+	for x := offsetX; x < windowWidth; x += gridSize {
+		vector.StrokeLine(screen, float32(x), 0, float32(x), float32(windowHeight), gridThickness, gridColor, true)
+	}
+	for y := 0; y < windowHeight; y += gridSize {
+		vector.StrokeLine(screen, 0, float32(y), float32(windowWidth), float32(y), gridThickness, gridColor, true)
+	}
+
 	vector.StrokeLine(screen, 0, rodY, windowWidth, rodY, rodWidth, rodColor, true)
 
 	vector.StrokeLine(screen, float32(g.scrollX+renderScale*g.cartX), rodY, float32(g.scrollX+renderScale*g.cartX+renderScale*g.params.R1*math.Sin(g.theta)), float32(rodY+renderScale*g.params.R1*math.Cos(g.theta)), armWidth, armColor, true)
