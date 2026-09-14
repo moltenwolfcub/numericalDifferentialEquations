@@ -25,7 +25,7 @@ const windowWidth, windowHeight = 192 * 8, 108 * 8
 const TPS = 60
 
 type Game struct {
-	scrollX float64 //future proofing for if i want to add sideways scrolling
+	scrollX float64
 
 	cartX float64
 	theta float64
