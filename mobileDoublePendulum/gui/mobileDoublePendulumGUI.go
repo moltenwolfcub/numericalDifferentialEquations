@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	mobiledoublependulum "github.com/moltenwolfcub/numericalDifferentialEquations/mobileDoublePendulum"
 	"github.com/moltenwolfcub/numericalDifferentialEquations/tensor"
@@ -38,6 +39,9 @@ type Game struct {
 
 	accumulator float64
 	lastTime    time.Time
+
+	clickStartScreenX float64
+	clickStartScrollX float64
 }
 
 func NewGame() *Game {
@@ -107,6 +111,16 @@ func (g *Game) Update() error {
 	g.cartVel = vel[0]
 	g.thetaVel = vel[1]
 	g.phiVel = vel[2]
+
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton0) {
+		g.clickStartScreenX, _ = ebiten.CursorPositionF()
+		g.clickStartScrollX = g.scrollX
+	}
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
+		currentX, _ := ebiten.CursorPositionF()
+		delta := currentX - g.clickStartScreenX
+		g.scrollX = g.clickStartScrollX + delta
+	}
 
 	return nil
 }
