@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math"
+
+	"github.com/moltenwolfcub/numericalDifferentialEquations/tensor"
 )
 
 const (
@@ -13,23 +15,7 @@ const (
 	r1, r2     float64 = 2, 2
 )
 
-type Vec3 [3]float64
-
-func (v Vec3) AddDelta(other Vec3, dt float64) Vec3 {
-	return Vec3{
-		v[0] + dt*other[0],
-		v[1] + dt*other[1],
-		v[2] + dt*other[2],
-	}
-}
-
-type Mat3x3 [3][3]float64 // m[a][b] will index ath column across and bth row down
-
-func (m Mat3x3) Det() float64 {
-	return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1]) - m[1][0]*(m[0][1]*m[2][2]-m[0][2]*m[2][1]) + m[2][0]*(m[0][1]*m[1][2]-m[0][2]*m[1][1])
-}
-
-func FindAccelerations(pos, vel Vec3) Vec3 {
+func FindAccelerations(pos, vel tensor.Vec3) tensor.Vec3 {
 	M := BuildMat(pos, vel)
 	B := BuildVec(pos, vel)
 
@@ -47,26 +33,26 @@ func FindAccelerations(pos, vel Vec3) Vec3 {
 	Mz[2] = B
 	Dz := Mz.Det()
 
-	return Vec3{Dx / D, Dy / D, Dz / D}
+	return tensor.Vec3{Dx / D, Dy / D, Dz / D}
 }
 
-func BuildMat(pos, vel Vec3) Mat3x3 {
-	return Mat3x3{
+func BuildMat(pos, vel tensor.Vec3) tensor.Mat3x3 {
+	return tensor.Mat3x3{
 		{m1 + m2 + m3, r1 * math.Cos(pos[1]) * (m2 + m3), math.Cos(pos[2])},
 		{r1 * math.Cos(pos[1]) * (m2 + m3), r2 * (m2 + m3), r1 * math.Cos(pos[1]-pos[2])},
 		{m3 * r2 * math.Cos(pos[2]), r1 * r2 * math.Cos(pos[1]-pos[2]) * m3, r2},
 	}
 }
 
-func BuildVec(pos, vel Vec3) Vec3 {
-	return Vec3{
+func BuildVec(pos, vel tensor.Vec3) tensor.Vec3 {
+	return tensor.Vec3{
 		vel[1]*vel[1]*r1*math.Sin(pos[1])*(m2+m3) + vel[2]*r2*math.Sin(pos[2])*m3,
 		-vel[2]*vel[2]*r1*r2*math.Sin(pos[1]-pos[2])*m3 - g*r1*math.Sin(pos[1])*(m2+m3),
 		-g*math.Sin(pos[2]) + r1*vel[1]*math.Sin(pos[1]-pos[2])*(vel[1]-2*pos[2]),
 	}
 }
 
-func SimulationStep(pos, vel Vec3) (outputPos, outputVel Vec3) {
+func SimulationStep(pos, vel tensor.Vec3) (outputPos, outputVel tensor.Vec3) {
 	k1Vel := vel
 	k1 := FindAccelerations(pos, vel)
 
@@ -82,12 +68,12 @@ func SimulationStep(pos, vel Vec3) (outputPos, outputVel Vec3) {
 	k4Vel := vel.AddDelta(k3, dt)
 	k4 := FindAccelerations(k4Pos, k4Vel)
 
-	outputVel = Vec3{
+	outputVel = tensor.Vec3{
 		vel[0] + dt*(k1[0]+2*k2[0]+2*k3[0]+k4[0])/6,
 		vel[1] + dt*(k1[1]+2*k2[1]+2*k3[1]+k4[1])/6,
 		vel[2] + dt*(k1[2]+2*k2[2]+2*k3[2]+k4[2])/6,
 	}
-	outputPos = Vec3{
+	outputPos = tensor.Vec3{
 		pos[0] + dt*(k1Vel[0]+2*k2Vel[0]+2*k3Vel[0]+k4Vel[0])/6,
 		pos[1] + dt*(k1Vel[1]+2*k2Vel[1]+2*k3Vel[1]+k4Vel[1])/6,
 		pos[2] + dt*(k1Vel[2]+2*k2Vel[2]+2*k3Vel[2]+k4Vel[2])/6,
@@ -96,8 +82,8 @@ func SimulationStep(pos, vel Vec3) (outputPos, outputVel Vec3) {
 }
 
 func main() {
-	pos := Vec3{0, 0, math.Pi / 3}
-	vel := Vec3{0, 0, 0}
+	pos := tensor.Vec3{0, 0, math.Pi / 3}
+	vel := tensor.Vec3{0, 0, 0}
 
 	runTime := 10.0
 	totalSteps := int(runTime / dt)
