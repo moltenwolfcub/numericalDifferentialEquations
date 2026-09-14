@@ -18,16 +18,19 @@ func FindAccelerations(pos, vel tensor.Vec3, p Parameters) tensor.Vec3 {
 	B := BuildVec(pos, vel, p)
 
 	D := M.Det()
+	if math.Abs(D) < 1e-9 {
+		return tensor.Vec3{0, 0, 0}
+	}
 
-	Mx := M
+	Mx := tensor.Mat3x3{B, M[1], M[2]}
 	Mx[0] = B
 	Dx := Mx.Det()
 
-	My := M
+	My := tensor.Mat3x3{M[0], B, M[2]}
 	My[1] = B
 	Dy := My.Det()
 
-	Mz := M
+	Mz := tensor.Mat3x3{M[0], M[1], B}
 	Mz[2] = B
 	Dz := Mz.Det()
 

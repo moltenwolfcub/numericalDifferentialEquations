@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 	"math"
@@ -14,11 +15,14 @@ import (
 )
 
 const (
-	dt = 0.005
+	dt = 0.001
 	g  = 9.81
 
-	m1, m2, m3 float64 = 1, 1, 1
-	r1, r2     float64 = 1, 1
+	m1, m2, m3 float64 = 5, 1, 3
+	r1, r2     float64 = 0.2, 0.4
+
+	manualScrolling bool = false
+	debug           bool = false
 )
 
 const windowWidth, windowHeight = 192 * 8, 108 * 8
@@ -58,8 +62,8 @@ func NewGame() *Game {
 		},
 
 		cartX: 0,
-		theta: -math.Pi / 12,
-		phi:   math.Pi / 3,
+		theta: -math.Pi / 4,
+		phi:   math.Pi / 0.8,
 
 		cartVel:  0,
 		thetaVel: 0,
@@ -68,9 +72,9 @@ func NewGame() *Game {
 }
 
 const (
-	renderScale       = 100
+	renderScale       = 400
 	rodWidth          = 2
-	rodY              = windowHeight / 3
+	rodY              = windowHeight / 2.5
 	cartW, cartH      = 60, 25
 	armWidth          = 5
 	massRadius        = 10
@@ -109,21 +113,29 @@ func (g *Game) Update() error {
 		g.accumulator -= g.params.Dt
 	}
 	g.cartX = pos[0]
-	g.theta = pos[1]
-	g.phi = pos[2]
+	g.theta = math.Remainder(pos[1], 2*math.Pi)
+	g.phi = math.Remainder(pos[2], 2*math.Pi)
 
 	g.cartVel = vel[0]
 	g.thetaVel = vel[1]
 	g.phiVel = vel[2]
 
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton0) {
-		g.clickStartScreenX, _ = ebiten.CursorPositionF()
-		g.clickStartScrollX = g.scrollX
+	if manualScrolling {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButton0) {
+			g.clickStartScreenX, _ = ebiten.CursorPositionF()
+			g.clickStartScrollX = g.scrollX
+		}
+		if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
+			currentX, _ := ebiten.CursorPositionF()
+			delta := currentX - g.clickStartScreenX
+			g.scrollX = g.clickStartScrollX + delta
+		}
+	} else {
+		g.scrollX = -renderScale*g.cartX + windowWidth/2
 	}
-	if ebiten.IsMouseButtonPressed(ebiten.MouseButton0) {
-		currentX, _ := ebiten.CursorPositionF()
-		delta := currentX - g.clickStartScreenX
-		g.scrollX = g.clickStartScrollX + delta
+
+	if debug {
+		fmt.Printf("Pos: [%.4f, %.4f, %.4f], Vel: [%.4f, %.4f, %.4f]\n", g.cartX, g.theta, g.phi, g.cartVel, g.thetaVel, g.phiVel)
 	}
 
 	return nil
