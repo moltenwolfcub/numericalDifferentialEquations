@@ -14,16 +14,16 @@ func DrawSpring(dst *ebiten.Image, startX, startY, endX, endY float64, coils int
 	if distance == 0 || coils <= 0 {
 		return
 	}
-	ux := dx / distance
-	uy := dy / distance
-	vx := -uy
-	vy := ux
+	axisX := dx / distance
+	axisY := dy / distance
+	normalX := -axisY
+	normalY := axisX
 
 	radius := springWidth / 2.0
-	stepLength := distance / float64(coils)
-	angleStep := math.Pi / 2.0
-	handleLength := angleStep / 3.0
-	centerDrift := stepLength / (2.0 * math.Pi)
+	coilSpacing := distance / float64(coils)
+	quarterTurn := math.Pi / 2.0
+	bezierHandleLength := quarterTurn / 3.0
+	centerAdvance := coilSpacing / (2.0 * math.Pi)
 
 	strokeOp := &vector.StrokeOptions{
 		Width:    float32(coilWidth),
@@ -36,45 +36,44 @@ func DrawSpring(dst *ebiten.Image, startX, startY, endX, endY float64, coils int
 	drawOp.ColorScale.ScaleWithColor(clr)
 
 	// disclaimer: bit of AI assistance below in figuring out how to create the coil shape
-	for i := 0; i < coils; i++ {
-		centerStart := float64(i)*stepLength + radius
-		position := func(angle float64) (x, y float64) {
-			center := centerStart + centerDrift*(angle-math.Pi)
-
-			axisOffset := center + radius*math.Cos(angle)
-			normalOffset := radius * math.Sin(angle)
-
-			x = startX + ux*axisOffset + vx*normalOffset
-			y = startY + uy*axisOffset + vy*normalOffset
-			return
-		}
-		tangent := func(angle float64) (x, y float64) {
-			axisOffset := centerDrift - radius*math.Sin(angle)
-			normalOffset := radius * math.Cos(angle)
-
-			x = ux*axisOffset + vx*normalOffset
-			y = uy*axisOffset + vy*normalOffset
-			return
-		}
+	for coil := 0; coil < coils; coil++ {
+		coilCenterStart := float64(coil)*coilSpacing + radius
 
 		for quarter := 0; quarter < 4; quarter++ {
-			angleStart := math.Pi + float64(quarter)*angleStep
-			angleEnd := angleStart + angleStep
+			startAngle := math.Pi + float64(quarter)*quarterTurn
+			endAngle := startAngle + quarterTurn
 
-			x0, y0 := position(angleStart)
-			x1, y1 := position(angleEnd)
-			tx0, ty0 := tangent(angleStart)
-			tx1, ty1 := tangent(angleEnd)
+			startCenter := coilCenterStart + centerAdvance*(startAngle-math.Pi)
+			startAxisOffset := startCenter + radius*math.Cos(startAngle)
+			startNormalOffset := radius * math.Sin(startAngle)
+			startPointX := startX + axisX*startAxisOffset + normalX*startNormalOffset
+			startPointY := startY + axisY*startAxisOffset + normalY*startNormalOffset
 
-			cx1 := x0 + tx0*handleLength
-			cy1 := y0 + ty0*handleLength
-			cx2 := x1 - tx1*handleLength
-			cy2 := y1 - ty1*handleLength
+			endCenter := coilCenterStart + centerAdvance*(endAngle-math.Pi)
+			endAxisOffset := endCenter + radius*math.Cos(endAngle)
+			endNormalOffset := radius * math.Sin(endAngle)
+			endPointX := startX + axisX*endAxisOffset + normalX*endNormalOffset
+			endPointY := startY + axisY*endAxisOffset + normalY*endNormalOffset
 
-			var quarterPath vector.Path
-			quarterPath.MoveTo(float32(x0), float32(y0))
-			quarterPath.CubicTo(float32(cx1), float32(cy1), float32(cx2), float32(cy2), float32(x1), float32(y1))
-			vector.StrokePath(dst, &quarterPath, strokeOp, drawOp)
+			startTangentAxis := centerAdvance - radius*math.Sin(startAngle)
+			startTangentNormal := radius * math.Cos(startAngle)
+			startTangentX := axisX*startTangentAxis + normalX*startTangentNormal
+			startTangentY := axisY*startTangentAxis + normalY*startTangentNormal
+
+			endTangentAxis := centerAdvance - radius*math.Sin(endAngle)
+			endTangentNormal := radius * math.Cos(endAngle)
+			endTangentX := axisX*endTangentAxis + normalX*endTangentNormal
+			endTangentY := axisY*endTangentAxis + normalY*endTangentNormal
+
+			cx1 := startPointX + startTangentX*bezierHandleLength
+			cy1 := startPointY + startTangentY*bezierHandleLength
+			cx2 := endPointX - endTangentX*bezierHandleLength
+			cy2 := endPointY - endTangentY*bezierHandleLength
+
+			var path vector.Path
+			path.MoveTo(float32(startPointX), float32(startPointY))
+			path.CubicTo(float32(cx1), float32(cy1), float32(cx2), float32(cy2), float32(endPointX), float32(endPointY))
+			vector.StrokePath(dst, &path, strokeOp, drawOp)
 		}
 	}
 }
