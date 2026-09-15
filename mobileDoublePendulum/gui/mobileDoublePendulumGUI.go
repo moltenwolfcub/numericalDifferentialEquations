@@ -18,8 +18,8 @@ const (
 	dt = 0.001
 	g  = 9.81
 
-	m1, m2, m3 float64 = 5, 1, 3
-	r1, r2     float64 = 0.2, 0.4
+	m1, m2, m3 float64 = 10, 5, 4
+	r1, r2     float64 = 2, 3
 
 	manualScrolling bool = false
 	debug           bool = false
@@ -62,17 +62,17 @@ func NewGame() *Game {
 		},
 
 		cartX: 0,
-		theta: -math.Pi / 4,
-		phi:   math.Pi / 0.8,
+		theta: 0,
+		phi:   0,
 
 		cartVel:  0,
-		thetaVel: 0,
-		phiVel:   0,
+		thetaVel: -20,
+		phiVel:   25,
 	}
 }
 
 const (
-	renderScale       = 400
+	renderScale       = 60
 	rodWidth          = 2
 	rodY              = windowHeight / 2.5
 	cartW, cartH      = 60, 25
