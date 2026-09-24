@@ -19,7 +19,7 @@ const (
 
 	m     float64 = 1
 	r     float64 = 1
-	k, y0 float64 = 50, 2
+	k, y0 float64 = 50, 3
 
 	debug bool = false
 )
@@ -49,8 +49,8 @@ func NewGame() *Game {
 			Y0: y0,
 		},
 
-		pos: 2,
-		vel: 1,
+		pos: 3.6,
+		vel: 0,
 	}
 }
 
@@ -64,9 +64,10 @@ const (
 	massRadius        = 30
 	massRadiusScaling = 4.0
 	anchorRadius      = 10
+	spokeWidth        = 7
 
 	floorDist    = 5
-	springLength = 2
+	springLength = 1.5
 
 	gridSize      = 64
 	gridThickness = 1.0
@@ -82,6 +83,7 @@ var (
 	massColor   = color.RGBA{0, 180, 230, 255}
 	pullyColor  = color.RGBA{255, 0, 0, 255}
 	anchorColor = color.RGBA{20, 20, 20, 255}
+	spokeColor  = color.RGBA{180, 0, 0, 255}
 )
 
 func (g *Game) Update() error {
@@ -120,7 +122,14 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	originX, originY := windowWidth/2.0, windowHeight/5.0
 
+	circleAngle := (g.pos - g.params.Y0) / g.params.R
+	cos := math.Cos(circleAngle)
+	sin := math.Sin(circleAngle)
 	vector.FillCircle(screen, float32(originX), float32(originY), float32(g.params.R*renderScale), pullyColor, true)
+
+	vector.StrokeLine(screen, float32(originX+g.params.R*renderScale*cos), float32(originY+g.params.R*renderScale*sin), float32(originX-g.params.R*renderScale*cos), float32(originY-g.params.R*renderScale*sin), spokeWidth, spokeColor, true)
+	vector.StrokeLine(screen, float32(originX-g.params.R*renderScale*sin), float32(originY+g.params.R*renderScale*cos), float32(originX+g.params.R*renderScale*sin), float32(originY-g.params.R*renderScale*cos), spokeWidth, spokeColor, true)
+
 	vector.FillCircle(screen, float32(originX), float32(originY), float32(anchorRadius), anchorColor, true)
 
 	floorY := float32(originY + (floorDist)*renderScale)
